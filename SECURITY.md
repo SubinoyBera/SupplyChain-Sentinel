@@ -1,7 +1,7 @@
 ## Security Policy
 
 ## Supported Versions
-We currently support the following versions of the project. Please ensure you are using a supported version to receive security updates and patches.
+This is the first version of the project and more updated versions would be available in future. Please ensure you are using the supported versions to receive security updates and patches.
 
 | Version | Support            | Notes                               |
 | ------- | ------------------ | ----------------------------------- |
@@ -10,7 +10,7 @@ We currently support the following versions of the project. Please ensure you ar
 ---
 
 ## Reporting a Vulnerability
-We take security seriously and appreciate contributions that help improve our project. If you discover a vulnerability, please report it responsibly by emailing [subinoyberadgp@gmail.com](mailto:subinoyberadgp@gmail.com).
+Security is taken seriously and contributions that help improve the project are highly appreciated. If you discover a vulnerability, please report it responsibly by emailing [subinoyberadgp@gmail.com](mailto:subinoyberadgp@gmail.com).
 
 ### Information to Include:
 - *Description:* Detailed explanation of the vulnerability.
@@ -18,7 +18,7 @@ We take security seriously and appreciate contributions that help improve our pr
 - *Impact Assessment:* Potential risk and scope (data leakage, model bias, etc.).
 - *Environment Details:* Version number, system details, and any configurations involved.
 
-We aim to acknowledge receipt of all vulnerability reports within *48 hours* and resolve critical issues within *14 days*. For non-critical issues, resolution time may vary based on complexity.
+All vulnerability reports are acknowledged within *48 hours* and resolve critical issues within *14 days*. For non-critical issues, resolution time may vary based on complexity.
 
 ---
 
@@ -46,8 +46,8 @@ We aim to acknowledge receipt of all vulnerability reports within *48 hours* and
 ---
 
 ## Disclosure Policy
-We believe in responsible disclosure. Once a vulnerability is reported:
-1. We will validate and acknowledge the report.
+Responsible disclosure policy is adopted. Once a vulnerability is reported:
+1. The report is acknowledged and validated.
 2. The reporter will be kept updated on the status of the fix.
 3. A public disclosure may be made only after the issue is resolved to prevent exploitation.
 
