@@ -6,5 +6,7 @@ seaborn
 matplotlib
 scikit-learn
 python-dotenv
+ensure
 cryptography
+Flask
 #-e .
