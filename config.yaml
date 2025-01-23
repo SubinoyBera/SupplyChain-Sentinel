@@ -3,3 +3,7 @@ artifacts_root: artifacts
 data_ingestion:
   root_dir: artifacts/data_ingestion
   file_name: SupplyChain.csv
+
+data_transformation:
+  root_dir: artifacts/data_transformation
+  data_path: artifacts/data_ingestion/SupplyChain.csv

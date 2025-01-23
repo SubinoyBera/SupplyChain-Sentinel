@@ -65,7 +65,7 @@ class DataIngestion:
             df.to_csv(self.data_path, index=False, header=True)
             logging.info("Data read from database")
         
-            return self.data_path 
+            return self.data_path
             
         except Exception as e:
             logging.error(f"Error in fetching data: {e}", exc_info=True)
