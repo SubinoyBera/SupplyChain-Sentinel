@@ -5,6 +5,7 @@ sqlalchemy
 seaborn
 matplotlib
 scikit-learn
+imblearn
 python-dotenv
 ensure
 cryptography
