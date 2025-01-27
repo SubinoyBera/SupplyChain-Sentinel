@@ -13,6 +13,7 @@ from sklearn.preprocessing import LabelEncoder
 class DataTransformationConfig:
     def __init__(self):
         self.config= read_yaml(Path("config.yaml"))
+        
     
     def get_data_transformation_config(self) -> Path:
         config=self.config.data_transformation
@@ -23,8 +24,7 @@ class DataTransformationConfig:
             logging.info("Created data_transformation path")
             
             return (root_dir, 
-                    data_path
-                   )
+                    data_path)
         
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -39,7 +39,7 @@ class DataTransformation:
         le=LabelEncoder()
         x=le.fit_transform(x)
         return x
-    
+           
     def get_transformation(self):
         try:
             logging.info("Data transformation initiated")
