@@ -6,8 +6,10 @@ seaborn
 matplotlib
 scikit-learn
 imblearn
-python-dotenv
+Flask
+mlflow
 ensure
+python-dotenv
 cryptography
 Flask
 #-e .
