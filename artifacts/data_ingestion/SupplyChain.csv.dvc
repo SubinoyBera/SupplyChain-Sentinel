@@ -1,0 +1,5 @@
+outs:
+- md5: 236222eb13e84be69978519ab5830604
+  size: 160765080
+  hash: md5
+  path: SupplyChain.csv
