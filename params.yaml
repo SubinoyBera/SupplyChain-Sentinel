@@ -27,6 +27,18 @@ models:
       low: 50
       high: 200
 
+    svm:
+    C: 
+      type: "loguniform"
+      low: 1e-2
+      high: 1e1
+    kernel: 
+      type: "categorical"
+      choices: ["linear", "rbf", "poly"]
+    gamma: 
+      type: "categorical"
+      choices: ["scale", "auto"]
+
   xgboost:
     learning_rate: 
       type: "loguniform"
