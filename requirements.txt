@@ -9,6 +9,7 @@ imblearn
 Flask
 mlflow
 ensure
+python-box
 python-dotenv
 cryptography
 Flask
