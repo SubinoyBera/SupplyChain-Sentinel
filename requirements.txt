@@ -12,5 +12,4 @@ ensure
 python-box
 python-dotenv
 cryptography
-Flask
 #-e .
