@@ -5,6 +5,9 @@ sqlalchemy
 seaborn
 matplotlib
 scikit-learn
+xgboost
+catboost
+lightgbm
 imblearn
 Flask
 mlflow
