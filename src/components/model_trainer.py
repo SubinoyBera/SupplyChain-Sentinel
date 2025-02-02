@@ -141,94 +141,103 @@ class ModelTrainer:
 with 
 
 # Optuna Objective Function
-def objective(trial):
-    model_name = trial.suggest_categorical("model", list(models.keys()))
-    params = config["optuna_params"][model_name]
-    
-    model = models[model_name](**{key: trial.suggest_float(key, *val) for key, val in params.items()})
-    model.fit(X_train, y_train)
-    
-    y_pred = model.predict(X_test)
-    return f1_score(y_test, y_pred)
-
-# Run Optuna Study
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=50)
-
-# Get Best Params
-best_params = study.best_params
-best_model_name = best_params.pop("model")
-best_model = models[best_model_name](**best_params)
-
-# Train Best Model
-best_model.fit(X_train, y_train)
-y_pred = best_model.predict(X_test)
-
-# Evaluate Metrics
-metrics = {
-    "accuracy": accuracy_score(y_test, y_pred),
-    "precision": precision_score(y_test, y_pred),
-    "recall": recall_score(y_test, y_pred),
-    "f1_score": f1_score(y_test, y_pred)
-}
-
-# 
-print("Best model:", best_model_name, "Metrics:", metrics)
-            pass
-
-
-
-import yaml
 import optuna
+import joblib
+from box import ConfigBox
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.datasets import make_classification
 
-# Load parameters from params.yaml
-with open("params.yaml", "r") as file:
-    params = yaml.safe_load(file)
+# Load parameters using ConfigBox
+params = ConfigBox.from_yaml(filename="params.yaml")
 
-# Generate sample data (replace with your dataset)
+# Generate sample data (Replace with your actual dataset)
 X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Optuna objective function for hyperparameter tuning
-def objective(trial):
-    model_name = trial.suggest_categorical("model", ["logistic_regression", "random_forest", "svm"])
+# Create a model trainer class
+class ModelTrainer:
+    def __init__(self, params):
+        self.params = params.models
 
-    if model_name == "logistic_regression":
-        C = trial.suggest_float("C", params["models"]["logistic_regression"]["C"]["low"], 
-                                params["models"]["logistic_regression"]["C"]["high"], log=True)
-        penalty = trial.suggest_categorical("penalty", params["models"]["logistic_regression"]["penalty"]["choices"])
-        solver = trial.suggest_categorical("solver", params["models"]["logistic_regression"]["solver"]["choices"])
-        model = LogisticRegression(C=C, penalty=penalty, solver=solver, max_iter=1000)
-    
-    elif model_name == "random_forest":
-        n_estimators = trial.suggest_int("n_estimators", params["models"]["random_forest"]["n_estimators"]["low"], 
-                                         params["models"]["random_forest"]["n_estimators"]["high"], 
-                                         step=params["models"]["random_forest"]["n_estimators"]["step"])
-        max_depth = trial.suggest_int("max_depth", params["models"]["random_forest"]["max_depth"]["low"], 
-                                      params["models"]["random_forest"]["max_depth"]["high"])
-        min_samples_split = trial.suggest_int("min_samples_split", params["models"]["random_forest"]["min_samples_split"]["low"], 
-                                              params["models"]["random_forest"]["min_samples_split"]["high"])
-        model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, min_samples_split=min_samples_split, random_state=42)
-    
-    elif model_name == "svm":
-        C = trial.suggest_float("C", params["models"]["svm"]["C"]["low"], params["models"]["svm"]["C"]["high"], log=True)
-        kernel = trial.suggest_categorical("kernel", params["models"]["svm"]["kernel"]["choices"])
-        gamma = trial.suggest_categorical("gamma", params["models"]["svm"]["gamma"]["choices"])
-        model = SVC(C=C, kernel=kernel, gamma=gamma)
+    def suggest_param(self, trial, param_name, param_info):
+        """Dynamically handle different parameter types in Optuna"""
+        param_type = param_info.type
 
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    return accuracy_score(y_test, y_pred)
+        if param_type == "int":
+            return trial.suggest_int(param_name, param_info.low, param_info.high)
+        elif param_type == "float":
+            return trial.suggest_float(param_name, param_info.low, param_info.high)
+        elif param_type == "loguniform":
+            return trial.suggest_float(param_name, param_info.low, param_info.high, log=True)
+        elif param_type == "uniform":
+            return trial.suggest_float(param_name, param_info.low, param_info.high)
+        elif param_type == "categorical":
+            return trial.suggest_categorical(param_name, param_info.choices)
 
-# Run hyperparameter optimization
+    def train(self, trial):
+        model_name = trial.suggest_categorical("model", list(self.params.keys()))
+        model_params = self.params[model_name]
+
+        if model_name == "logistic_regression":
+            model = LogisticRegression(
+                C=self.suggest_param(trial, "C", model_params.C),
+                penalty=self.suggest_param(trial, "penalty", model_params.penalty),
+                solver=self.suggest_param(trial, "solver", model_params.solver),
+                max_iter=1000
+            )
+
+        elif model_name == "random_forest":
+            model = RandomForestClassifier(
+                n_estimators=self.suggest_param(trial, "n_estimators", model_params.n_estimators),
+                max_depth=self.suggest_param(trial, "max_depth", model_params.max_depth),
+                min_samples_split=self.suggest_param(trial, "min_samples_split", model_params.min_samples_split),
+                random_state=42
+            )
+
+        elif model_name == "svm":
+            model = SVC(
+                C=self.suggest_param(trial, "C", model_params.C),
+                kernel=self.suggest_param(trial, "kernel", model_params.kernel),
+                gamma=self.suggest_param(trial, "gamma", model_params.gamma)
+            )
+
+        elif model_name == "xgboost":
+            model = XGBClassifier(
+                learning_rate=self.suggest_param(trial, "learning_rate", model_params.learning_rate),
+                n_estimators=self.suggest_param(trial, "n_estimators", model_params.n_estimators),
+                max_depth=self.suggest_param(trial, "max_depth", model_params.max_depth),
+                subsample=self.suggest_param(trial, "subsample", model_params.subsample),
+                use_label_encoder=False, eval_metric="logloss"
+            )
+
+        elif model_name == "lightgbm":
+            model = LGBMClassifier(
+                learning_rate=self.suggest_param(trial, "learning_rate", model_params.learning_rate),
+                num_leaves=self.suggest_param(trial, "num_leaves", model_params.num_leaves)
+            )
+
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        return accuracy_score(y_test, y_pred)
+
+# Run Optuna hyperparameter tuning
+trainer = ModelTrainer(params)
 study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=20)
+study.optimize(trainer.train, n_trials=20)
 
-# Print best parameters
+# Save the best model
+best_model = trainer.train(study.best_trial)
+joblib.dump(best_model, "best_model.pkl")
+
+# Print best hyperparameters
 print("Best hyperparameters:", study.best_params)
+
+
+
+
