@@ -6,6 +6,8 @@ from src.logger import logging
 from utils import read_yaml, create_directories
 
 import pandas as pd
+import joblib
+import optuna
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
@@ -41,132 +43,15 @@ class ModelTrainerConfig:
         
         return (root_dir, 
                 train_data_path,
+                test_data_path,
                 params)
-                
-        
-    
-class ModelTrainer:
-    def __init__(self, config:ModelTrainerConfig):
-        self.params
-
-    def objective(trial):
-    model_name = trial.suggest_categorical("model", list(models.keys()))
-    params = config["optuna_params"][model_name]
-    
-    model = models[model_name](**{key: trial.suggest_float(key, *val) for key, val in params.items()})
-    model.fit(X_train, y_train)
-    
-    y_pred = model.predict(X_test)
-    return f1_score(y_test, y_pred)
-
-    def objective(trial):
-    model_name = trial.suggest_categorical("model", list(models.keys()))
-    params = config["optuna_params"][model_name]
-    
-    model = models[model_name](**{key: trial.suggest_float(key, *val) for key, val in params.items()})
-    
-    with mlflow.start_run(nested=True):  # Start a nested MLflow run
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        
-        # Calculate metrics
-        metrics = {
-            "accuracy": accuracy_score(y_test, y_pred),
-            "precision": precision_score(y_test, y_pred),
-            "recall": recall_score(y_test, y_pred),
-            "f1_score": f1_score(y_test, y_pred)
-        }
-
-        # Log model details
-        mlflow.log_params(params)
-        mlflow.log_metrics(metrics)
-        mlflow.log_param("model_name", model_name)
-        mlflow.sklearn.log_model(model, f"model_{model_name}")
-
-    return metrics["f1_score"]  # Return F1-score for Optuna optimization
 
 
-    def objective(trial, model_name):
-    model_params = self.params["models"][model_name]
-
-    hyperparams = {}
-    for param, config in model_params.items():
-        if config["type"] == "loguniform":
-            hyperparams[param] = trial.suggest_loguniform(param, config["low"], config["high"])
-        elif config["type"] == "int":
-            hyperparams[param] = trial.suggest_int(param, config["low"], config["high"], config.get("step", 1))
-        elif config["type"] == "uniform":
-            hyperparams[param] = trial.suggest_float(param, config["low"], config["high"])
-        elif config["type"] == "categorical":
-            hyperparams[param] = trial.suggest_categorical(param, config["choices"])
-
-    
-    model_mapping = {
-        "logistic_regression": LogisticRegression,
-        "svm": SVC,
-        "random_forest": RandomForestClassifier,
-        "xgboost": XGBClassifier,
-        "lightgbm": LGBMClassifier,
-    }
-    
-    model = model_mapping[model_name](**hyperparams)
-
-    # Perform cross-validation
-    score = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy', n_jobs=-1).mean()
-    return score
-
-    def initiate_model_training(self):
-        try:
-            X_train= df.drop(['Suspected_Fraud'], axis=1)
-            y_train= df['Suspected_Fraud']
-            
-            model= {
-                "svm": SVC(),
-                "logistic_regression": LogisticRegression(),
-                "Decision Tree": DecisionTreeClassifier(),
-                "randon_forest": RandomForestClassifier(),
-                "Linear Discriminant Analysis": LinearDiscriminantAnalysis(),
-                "Naive Bayes": GaussianNB(),
-                "lightGBM": LGBMClassifier(),
-                "XGBoost": XGBClassifier(),
-                "CatBoost": CatBoostClassifier(),
-                "AdaBoost": AdaBoostClassifier()
-            }
-        
-        except:
-            import mlflow
-
-
-# Load params from YAML
-with 
-
-# Optuna Objective Function
-import optuna
-import joblib
-from box import ConfigBox
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.datasets import make_classification
-
-# Load parameters using ConfigBox
-params = ConfigBox.from_yaml(filename="params.yaml")
-
-# Generate sample data (Replace with your actual dataset)
-X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Create a model trainer class
 class ModelTrainer:
     def __init__(self, params):
-        self.params = params.models
+        self.params = params
 
     def suggest_param(self, trial, param_name, param_info):
-        """Dynamically handle different parameter types in Optuna"""
         param_type = param_info.type
 
         if param_type == "int":
@@ -180,7 +65,8 @@ class ModelTrainer:
         elif param_type == "categorical":
             return trial.suggest_categorical(param_name, param_info.choices)
 
-    def train(self, trial):
+
+    def train(self, trial, X_train, y_train):
         model_name = trial.suggest_categorical("model", list(self.params.keys()))
         model_params = self.params[model_name]
 
@@ -238,6 +124,33 @@ joblib.dump(best_model, "best_model.pkl")
 # Print best hyperparameters
 print("Best hyperparameters:", study.best_params)
 
+class DataBalancer():
+    def __init__():
+        pass
+    
+    def smote(X_train, y_train):
+        sm= SMOTE(random_state=42)
+        X_train_sm, y_train_sm= sm.fit_resample(X_train, y_train)
+        return X_train_sm, y_train_sm
+    
+    def adasyn(X_train, y_train):
+        ada= ADASYN(random_state=42)
+        X_train_ada, y_train_ada= ada.fit_resample(X_train, y_train)
+        return X_train_ada, y_train_ada
+    
+    def enn(X_train, y_train):
+        en= EditedNearestNeighbours()
+        X_train_en, y_train_en= en.fit_resample(X_train, y_train)
+        return X_train_en, y_train_en
+    
+    def smote_tomek(X_train, y_train):
+        smt= SMOTETomek(0.75)
+        X_train_smt, y_train_smt= smt.fit_resample(X_train, y_train)
+        return X_train_smt, y_train_smt
 
 
-
+balancer= DataBalancer()
+X_train_res, y_train_res= balancer.smote(X_train, y_train)
+trainer= ModelTrainer(params)
+study = optuna.create_study(direction="maximize")
+study.optimize(trainer.train, n_trials=20)
