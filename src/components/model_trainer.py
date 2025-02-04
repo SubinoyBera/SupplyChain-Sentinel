@@ -20,6 +20,7 @@ from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
+from sklearn. metrics import accuracy_score
 
 from imblearn.over_sampling import SMOTE, ADASYN
 from imblearn.under_sampling import EditedNearestNeighbours
@@ -32,7 +33,7 @@ class ModelTrainerConfig:
         self.params_config= read_yaml(Path("params.yaml"))
         
     
-    def get_model_training_config(self) -> Path:
+    def get_model_trainer_config(self) -> Path:
         config= self.config.model_training
         params= self.params_config
         
@@ -47,9 +48,39 @@ class ModelTrainerConfig:
                 params)
 
 
+class DataBalancer():
+    def __init__():
+        pass
+    
+    def smote(X_train, y_train):
+        sm= SMOTE(random_state=42)
+        X_train_sm, y_train_sm= sm.fit_resample(X_train, y_train)
+        return (X_train_sm,
+                y_train_sm)
+    
+    def adasyn(X_train, y_train):
+        ada= ADASYN(random_state=42)
+        X_train_ada, y_train_ada= ada.fit_resample(X_train, y_train)
+        return (X_train_ada,
+                y_train_ada)
+    
+    def enn(X_train, y_train):
+        en= EditedNearestNeighbours()
+        X_train_en, y_train_en= en.fit_resample(X_train, y_train)
+        return (X_train_en,
+                y_train_en)
+    
+    def smote_tomek(X_train, y_train):
+        smt= SMOTETomek(0.75)
+        X_train_smt, y_train_smt= smt.fit_resample(X_train, y_train)
+        return (X_train_smt,
+                y_train_smt)
+        
+
 class ModelTrainer:
-    def __init__(self, params):
-        self.params = params
+    def __init__(self, config:ModelTrainerConfig):
+        self.root_dir, self.train_data_path, 
+        self.test_data_path, self.params= config.get_model_trainer_config()
 
     def suggest_param(self, trial, param_name, param_info):
         param_type = param_info.type
@@ -66,7 +97,7 @@ class ModelTrainer:
             return trial.suggest_categorical(param_name, param_info.choices)
 
 
-    def train(self, trial, X_train, y_train):
+    def train(self, trial, X_train, y_train, X_test, y_test):
         model_name = trial.suggest_categorical("model", list(self.params.keys()))
         model_params = self.params[model_name]
 
@@ -111,46 +142,24 @@ class ModelTrainer:
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         return accuracy_score(y_test, y_pred)
-
-# Run Optuna hyperparameter tuning
-trainer = ModelTrainer(params)
-study = optuna.create_study(direction="maximize")
-study.optimize(trainer.train, n_trials=20)
-
-# Save the best model
-best_model = trainer.train(study.best_trial)
-joblib.dump(best_model, "best_model.pkl")
-
-# Print best hyperparameters
-print("Best hyperparameters:", study.best_params)
-
-class DataBalancer():
-    def __init__():
-        pass
     
-    def smote(X_train, y_train):
-        sm= SMOTE(random_state=42)
-        X_train_sm, y_train_sm= sm.fit_resample(X_train, y_train)
-        return X_train_sm, y_train_sm
     
-    def adasyn(X_train, y_train):
-        ada= ADASYN(random_state=42)
-        X_train_ada, y_train_ada= ada.fit_resample(X_train, y_train)
-        return X_train_ada, y_train_ada
+    def initiate_model_training(self):
+        train_data= pd.read_csv(self.train_data_path)
+        test_data= pd.read_csv(self.test_data_path)
+        
+        X_train, X_test= train_data.drop(["Suspected_Fraud"],axis=1), test_data.drop(["Suspected_Fraud"],axis=1)
+        y_train, y_test= train_data(["Suspected_Fraud"]), test_data(["Suspected_Fraud"])
+        
+        balancers=["smote", "adasyn", "enn", "smote_tomek"]
+        obj= DataBalancer()
+        
+        for i in balancers:
+            if i=="smote":
+                X_train_res, y_train_res= obj.smote(X_train, y_train)
+                study = optuna.create_study(direction="maximize")
+                study.optimize(self.train(trial=20, X_train=X_train_res, y_train=y_train_res,
+                                          X_test=X_test, y_test=y_test))
     
-    def enn(X_train, y_train):
-        en= EditedNearestNeighbours()
-        X_train_en, y_train_en= en.fit_resample(X_train, y_train)
-        return X_train_en, y_train_en
     
-    def smote_tomek(X_train, y_train):
-        smt= SMOTETomek(0.75)
-        X_train_smt, y_train_smt= smt.fit_resample(X_train, y_train)
-        return X_train_smt, y_train_smt
-
-
-balancer= DataBalancer()
-X_train_res, y_train_res= balancer.smote(X_train, y_train)
-trainer= ModelTrainer(params)
-study = optuna.create_study(direction="maximize")
-study.optimize(trainer.train, n_trials=20)
+    
