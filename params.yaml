@@ -1,78 +1,13 @@
 models:
 
-  logistic_regression:
-    C: 
-      type: "loguniform"
-      low: 1e-2
-      high: 1e1
-    penalty: 
-      type: "categorical"
-      choices: ["l1", "l2"]
-    solver: 
-      type: "categorical"
-      choices: ["liblinear", "lbgfs", "netwon-cg"]
-  
- random_forest:
-    n_estimators: 
-      type: "int"
-      low: 50
-      high: 300
-      step: 50
-    max_depth: 
-      type: "int"
-      low: 5
-      high: 30
-    min_samples_split: 
-      type: "int"
-      low: 50
-      high: 200
+  Logistic Regression:
+    C: [0.5, 1, 5]
+    solver: ['liblinear', 'lbfgs', 'newton-cg']
+    penalty: ['l2']
+    class_weight: [{0: 1, 1: 5}, {0: 1, 1: 10}]
+    max_iter: [5000]
 
-    svm:
-    C: 
-      type: "loguniform"
-      low: 1e-2
-      high: 1e1
-    kernel: 
-      type: "categorical"
-      choices: ["linear", "rbf", "poly"]
-    gamma: 
-      type: "categorical"
-      choices: ["scale", "auto"]
-
-  xgboost:
-    learning_rate: 
-      type: "loguniform"
-      low: 0.01
-      high: 0.3
-    n_estimators: 
-      type: "int"
-      low: 100
-      high: 500
-      step: 50
-    max_depth: 
-      type: "int"
-      low: 3
-      high: 10
-    subsample: 
-      type: "uniform"
-      low: 0.6
-      high: 1.0
-
-  lightgbm:
-    learning_rate: 
-      type: "loguniform"
-      low: 0.01
-      high: 0.3
-    num_leaves: 
-      type: "int"
-      low: 30
-      high: 100
-    max_depth: 
-      type: "int"
-      low: -1
-      high: 20
-    n_estimators: 
-      type: "int"
-      low: 100
-      high: 500
-      step: 50
+  SVM:
+    C: [0.5, 1, 10]
+    kernel: ['rbf', 'poly']
+    gamma: ['scale', 'auto']
