@@ -11,14 +11,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 from xgboost import XGBClassifier
-from catboost import CatBoostClassifier
+from lightgbm import LGBMClassifier
 from sklearn. metrics import accuracy_score, roc_auc_score
 
-from imblearn.over_sampling import SMOTE, ADASYN
-from imblearn.under_sampling import EditedNearestNeighbours
+from imblearn.over_sampling import ADASYN
 from imblearn.combine import SMOTETomek
 
 
@@ -53,18 +51,50 @@ class ModelTrainer:
 
         models={
             "Logistic Regression": LogisticRegression(),
-            "SVM": SVC()
+            "LinearSVC": LinearSVC(),
+            "Decision Tree": DecisionTreeClassifier(),
+            "Random Forest": RandomForestClassifier(),
+            "LightGBM": LGBMClassifier(),
+            "XgBoost": XGBClassifier(), 
         }
         
         try: 
             for model_name, model in models.items():
-                logging.info(f"Tuning {model_name}...")
+                logging.info(f"Tuning {model_name} model...")
                 grid_search= GridSearchCV(model, hyperparams[model_name], cv=5,
                                            scoring="roc_auc", n_jobs=-1)
                 grid_search.fit(X_train, y_train)
 
                 best_params= grid_search.best_params_
                 best_model= model.set_params(**best_params)
+                logging.info(f"Started training: {model_name}")
+                best_model.fit(X_train, y_train)
+
+                joblib.dump(best_model, os.path.join(self.root_dir, model_name))
+                logging.info(f"{model_name} successfull trained")
+        
+        except Exception as e:
+            logging.error(f"Error occured during tuning and trining model: {e}", exc_info=True)
+            raise CustomException(e,sys)
+        
+        
+        #Train models with applying data balancing 
+        models={
+            "LinearSVC": LinearSVC(),
+            "LightGBM": LGBMClassifier(),
+            "XgBoost": XGBClassifier(), 
+        }
+        
+        try: 
+            for model_name, model in models.items():
+                logging.info(f"Tuning {model_name} model...")
+                grid_search= GridSearchCV(model, hyperparams[model_name], cv=5,
+                                           scoring="roc_auc", n_jobs=-1)
+                grid_search.fit(X_train, y_train)
+
+                best_params= grid_search.best_params_
+                best_model= model.set_params(**best_params)
+                logging.info(f"Started training: {model_name}")
                 best_model.fit(X_train, y_train)
 
                 joblib.dump(best_model, os.path.join(self.root_dir, model_name))
