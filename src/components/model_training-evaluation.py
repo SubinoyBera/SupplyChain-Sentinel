@@ -128,12 +128,17 @@ class ModelExperimentation:
                     logging.info(f"Started training: {model_name} with {balancers[i]}")
                     best_model= model.set_params(**best_params)
                     best_model.fit(X_train_res, y_train_res)
-                    model_rename= f"{model_name} with {balancers[i]}"
+                    report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
+                    
+                    model_rename= f"{model_name} with {balancers[i]}"  
+                    track_experiment(model_name=model_rename, model=best_model,
+                                 model_params=best_params, report=report)
+                
                     joblib.dump(best_model, os.path.join(self.root_dir, model_rename))
                     logging.info(f"{model_rename} successfull trained")
         
                 except Exception as e:
-                    logging.error(f"Error occured during tuning and trining model: {e}", exc_info=True)
+                    logging.error(f"Error occured during tuning and training model: {e}", exc_info=True)
                     raise CustomException(e,sys)
             
 
