@@ -1,24 +1,24 @@
 import sys
 from src.logger import logging
 from src.exception import CustomException
-from src.components.model_trainer import ModelTrainerConfig, ModelTrainer
+from src.components.model_experimentation import ModelTrainerConfig, ModelExperimentation
 
-class ModelTrainerPipeline:
+class ExperimentationPipeline:
     def __init__(self):
         pass
     
     def main(self):
         config= ModelTrainerConfig()
-        model_trainer= ModelTrainer(config)
+        model_exp= ModelExperimentation(config)
 
         #logging.info("Starting model trainig")
-        model_trainer.initiate_model_training()
+        model_exp.initiate_model_experimentation()
         
      
 if __name__=='__main__':
     try:
         logging.info("Starting trainig pipeline")
-        obj= ModelTrainerPipeline()
+        obj= ExperimentationPipeline()
         obj.main()
         logging.info("Model training completed.")
         

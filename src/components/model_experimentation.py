@@ -14,10 +14,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
-from sklearn. metrics import accuracy_score, roc_auc_score
-
 from imblearn.over_sampling import ADASYN
 from imblearn.combine import SMOTETomek
+import mlflow
 
 
 class ModelTrainerConfig:
@@ -91,6 +90,8 @@ class ModelExperimentation:
                 best_model.fit(X_train, y_train)
                 report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
 
+                mlflow.set_experiment("Fraud Detection")
+                mlflow.set_tracking_uri(uri="")
                 track_experiment(model_name=model_name, model=best_model,
                                  model_params=best_params, report=report)
 
@@ -130,7 +131,9 @@ class ModelExperimentation:
                     best_model.fit(X_train_res, y_train_res)
                     report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
                     
-                    model_rename= f"{model_name} with {balancers[i]}"  
+                    model_rename= f"{model_name} with {balancers[i]}"
+                    mlflow.set_experiment("Fraud Detection")
+                    mlflow.set_tracking_uri(uri="")
                     track_experiment(model_name=model_rename, model=best_model,
                                  model_params=best_params, report=report)
                 
@@ -142,7 +145,7 @@ class ModelExperimentation:
                     raise CustomException(e,sys)
             
 
-    def initiate_model_training(self):
+    def initiate_model_experimentation(self):
         train_data= pd.read_csv(self.train_data_path)
         test_data= pd.read_csv(self.test_data_path)
         
