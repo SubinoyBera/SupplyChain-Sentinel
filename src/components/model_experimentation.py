@@ -11,7 +11,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from imblearn.over_sampling import ADASYN
@@ -64,15 +64,19 @@ class ModelExperimentation:
 
     def model_trainer(self, X_train, y_train, X_test, y_test):
         hyperparams= self.params.models
-        models={
+        mlflow.set_experiment("Fraud Detection")
+        mlflow.set_tracking_uri(uri="")
+        
+        #Train models on the imbalanced data
+        models_set1={
             "Logistic Regression": LogisticRegression(),
+            "SVM": SVC(),
             "Decision Tree": DecisionTreeClassifier(),
             "Random Forest": RandomForestClassifier(),
-            "LightGBM": LGBMClassifier(),
             "XgBoost": XGBClassifier(), 
         }
         
-        for model_name, model in models.items():
+        for model_name, model in models_set1.items():
             try:
                 logging.info(f"Tuning {model_name} model...")
                 grid_search= GridSearchCV(model, hyperparams[model_name], cv=5,
@@ -88,23 +92,28 @@ class ModelExperimentation:
                 logging.info(f"Started training: {model_name}")
                 best_model= model.set_params(**best_params)
                 best_model.fit(X_train, y_train)
-                report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
-
-                mlflow.set_experiment("Fraud Detection")
-                mlflow.set_tracking_uri(uri="")
-                track_experiment(model_name=model_name, model=best_model,
-                                 model_params=best_params, report=report)
+                logging.info("Training completed")
+                try:
+                    report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
+                    logging.info("Model evaluation completed")
+                    
+                    track_experiment(model_name=model_name, model=best_model,
+                                     model_params=best_params, report=report)
+                    logging.info("Experiment successfully tracked")
+                    
+                except Exception as e:
+                    logging.error(f"Error in experiment tracking/evaluation: {e}", exc_info=True)
+                    raise CustomException(e,sys)
 
                 joblib.dump(best_model, os.path.join(self.root_dir, model_name))
-                logging.info(f"{model_name} successfull trained")
+                logging.info(f"{model_name} model successfully saved in dir")
             
             except Exception as e:
-                logging.error(f"Error occured in training model: {e}", exc_info=True)
+                logging.error(f"Error in model training: {e}", exc_info=True)
                 raise CustomException(e,sys)
         
         #Train models with applying data balancing 
-        models={
-            "LinearSVC": LinearSVC(),
+        models_set2={
             "RandomForest": RandomForestClassifier(),
             "LightGBM": LGBMClassifier(),
             "XgBoost": XGBClassifier(), 
@@ -112,7 +121,7 @@ class ModelExperimentation:
         
         balancers=['smote_tomek', 'adasyn']    
         obj= DataBalancer()
-        for model_name, model in models.items():
+        for model_name, model in models_set2.items():
             for i in range(len(balancers)):
                 X_train_res, y_train_res= obj[balancers[i]](X_train, y_train)
                 try:
@@ -129,16 +138,23 @@ class ModelExperimentation:
                     logging.info(f"Started training: {model_name} with {balancers[i]}")
                     best_model= model.set_params(**best_params)
                     best_model.fit(X_train_res, y_train_res)
-                    report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
+                    logging.info("Training completed")
                     
                     model_rename= f"{model_name} with {balancers[i]}"
-                    mlflow.set_experiment("Fraud Detection")
-                    mlflow.set_tracking_uri(uri="")
-                    track_experiment(model_name=model_rename, model=best_model,
-                                 model_params=best_params, report=report)
+                    try:
+                        report= evaluate_model(model=best_model, X_test=X_test, y_test=y_test)
+                        logging.info("Model evaluation completed")
+                        
+                        track_experiment(model_name=model_rename, model=best_model,
+                                     model_params=best_params, report=report)
+                        logging.info("Experiment successfully tracked")
+                        
+                    except Exception as e:
+                        logging.error(f"Error in experiment tracking/evaluation: {e}", exc_info=True)
+                        raise CustomException(e,sys)
                 
                     joblib.dump(best_model, os.path.join(self.root_dir, model_rename))
-                    logging.info(f"{model_rename} successfull trained")
+                    logging.info(f"{model_rename} successfull saved in dir")
         
                 except Exception as e:
                     logging.error(f"Error occured during tuning and training model: {e}", exc_info=True)

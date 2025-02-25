@@ -1,14 +1,16 @@
 models:
 
   Logistic Regression:
-    C: [0.5, 1, 5]
+    C: [0.01, 0.1, 1]
     solver: ['liblinear', 'lbfgs', 'newton-cg']
     penalty: ['l2']
     class_weight: [{0: 1, 1: 5}, {0: 1, 1: 10}]
     max_iter: [5000]
 
-  LinearSVC:
-    C: [0.5, 1, 10]
+  SVM:
+    C: [0.01, 0.1]
+    kernel: ['rbf', 'poly']
+    gamma: ['auto', 'scale']
     max_iter: [5000]
     
   Decision Tree:
