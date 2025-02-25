@@ -3,7 +3,7 @@ from src.logger import logging
 from src.exception import CustomException
 from src.pipeline.data_ingestion_pipeline import DataIngestionPipeline
 from src.pipeline.data_transformation_pipeline import DataTransformationPipeline
-from src.pipeline.train_pipeline import ModelTrainerPipeline
+from src.pipeline.experimentation_pipeline import ExperimentationPipeline
 
 try:
     logging.info("STAGE:1 Data ingestion stage initiated")
@@ -28,12 +28,12 @@ except Exception as e:
     raise CustomException(e,sys)
 
 try:
-    logging.info("STAGE:3 Model Training stage initiated")
+    logging.info("STAGE:3 Experimentation stage (model training-evaluation) initiated")
     
-    model_trainer= ModelTrainerPipeline()
+    model_trainer= ExperimentationPipeline()
     model_trainer.main()
-    logging.info("Model Training stage completed\n\n")
+    logging.info("Experimentation stage completed\n\n")
     
 except Exception as e:
-    logging.error(f"Model Training Failed: {e}", exc_info=True)
+    logging.error(f"Model Experiments Failed: {e}", exc_info=True)
     raise CustomException(e,sys)
